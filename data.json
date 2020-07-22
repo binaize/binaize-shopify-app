@@ -1,0 +1,104 @@
+{
+    "tag_1": {
+        "products": [
+            "Abigail Ring",
+            "Stevi Necklace, Gold",
+            "Syd Necklace, Gold",
+            "Kira Earrings, Blue",
+            "Yvette Bracelet"
+        ],
+        "product_conversion": {
+            "visitor_count": [
+                0,
+                120,
+                21,
+                120,
+                20
+            ],
+            "conversion_count": [
+                0,
+                0,
+                30,
+                0,
+                10
+            ],
+            "conversion_percentage": [
+                20,
+                0,
+                20,
+                0,
+                0
+            ]
+        },
+        "summary": "<strong> SUMMARY : </strong> <span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span> has the least conversion of <span style = 'color: blue; font-size: 16px;'><strong> 0.0% </strong></span>",
+        "conclusion": "<strong> CONCLUSION : </strong> Experiment with different creatives/copies for<span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span>"
+    },
+    "tag2": {
+        "products": [
+            "Abigail Ring",
+            "Stevi Necklace, Gold",
+            "Syd Necklace, Gold",
+            "Kira Earrings, Blue",
+            "Yvette Bracelet"
+        ],
+        "product_conversion": {
+            "visitor_count": [
+                20,
+                20,
+                21,
+                20,
+                40
+            ],
+            "conversion_count": [
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            "conversion_percentage": [
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        "summary": "<strong> SUMMARY : </strong> <span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span> has the least conversion of <span style = 'color: blue; font-size: 16px;'><strong> 0.0% </strong></span>",
+        "conclusion": "<strong> CONCLUSION : </strong> Experiment with different creatives/copies for<span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span>"
+    },
+    "tag_3": {
+        "products": [
+            "Abigail Ring",
+            "Stevi Necklace, Gold",
+            "Syd Necklace, Gold",
+            "Kira Earrings, Blue",
+            "Yvette Bracelet"
+        ],
+        "product_conversion": {
+            "visitor_count": [
+                10,
+                0,
+                11,
+                10,
+                0
+            ],
+            "conversion_count": [
+                0,
+                0,
+                10,
+                0,
+                10
+            ],
+            "conversion_percentage": [
+                10,
+                10,
+                0,
+                0,
+                0
+            ]
+        },
+        "summary": "<strong> SUMMARY : </strong> <span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span> has the least conversion of <span style = 'color: blue; font-size: 16px;'><strong> 0.0% </strong></span>",
+        "conclusion": "<strong> CONCLUSION : </strong> Experiment with different creatives/copies for<span style = 'color: blue; font-size: 16px;'><strong> Abigail Ring </strong></span>"
+    }
+}
