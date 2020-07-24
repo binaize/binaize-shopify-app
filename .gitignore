@@ -137,3 +137,4 @@ package-lock.json
 hermes-dev.env
 hermes-prod.env
 hermes-staging.env
+*.pem

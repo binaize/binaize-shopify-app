@@ -45,10 +45,10 @@ cp hermes-prod.env hermes.env
 # For first time deployment
 
 ```bash
-nohup sudo docker-compose -f docker-compose-hermes.yaml up --build --remove-orphans >> ~/theia.out&
+nohup sudo docker-compose -f docker-compose-hermes.yaml up --build --remove-orphans >> ~/hermes.out&
 ```
 
 # For re-deployment
 ```bash
-nohup sudo docker-compose -f docker-compose-hermes.yaml up --build --remove-orphans >> ~/theia.out&
+nohup sudo docker-compose -f docker-compose-hermes.yaml up --build --remove-orphans >> ~/hermes.out&
 ```

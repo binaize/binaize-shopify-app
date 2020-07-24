@@ -131,9 +131,3 @@ dmypy.json
 node_modules/*
 .next/
 .idea/
-
-hermes.env
-package-lock.json
-hermes-dev.env
-hermes-prod.env
-hermes-staging.env
