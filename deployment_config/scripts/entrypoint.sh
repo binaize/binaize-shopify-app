@@ -6,7 +6,7 @@
 
 printenv > /.env
 npm run build
-pm2 serve .next --spa --no-daemon
+pm2 start npm --no-daemon -- start
 
 # --------------------------------------------------------------------------------------------------
 # to make the container alive for indefinite time
