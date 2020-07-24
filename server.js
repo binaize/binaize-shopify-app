@@ -2,7 +2,6 @@ require('isomorphic-fetch');
 
 const conf = require("./config");
 const FormData = require('form-data');
-
 const dotenv = require('dotenv');
 const Koa = require('koa');
 const next = require('next');
@@ -25,13 +24,9 @@ app.prepare().then(() => {
     server.keys = [SHOPIFY_API_SECRET_KEY];
 
     function fetchCall(shop, token) {
-
-        let binaize_access_token = '';
-
         const formData = new FormData();
         formData.append("username", "bivav");
         formData.append("password", "bivav12!@");
-
 
         return fetch(process.env.REACT_APP_BASE_URL + process.env.REACT_APP_TOKEN, {
             method: "post",
@@ -44,9 +39,7 @@ app.prepare().then(() => {
                 console.log(err);
                 return "error"
             });
-
     }
-
 
     server.use(
         createShopifyAuth({
@@ -57,23 +50,8 @@ app.prepare().then(() => {
             async afterAuth(ctx) {
                 const {shop, accessToken} = ctx.session;
 
-                console.log("accessCode")
+                console.log("Offline Access Token")
                 console.log(accessToken)
-
-
-                // let shopify_access_token = await fetch("https://{shop}.myshopify.com/admin/oauth/access_token",
-                //     {
-                //         method: "POST",
-                //         body: {
-                //             "client_id": SHOPIFY_API_KEY,
-                //             "client_secret": SHOPIFY_API_SECRET_KEY,
-                //             "code": accessToken
-                //         }
-                //     }).then((response) => {
-                //     console.log(response.json())
-                //     return response.json()
-                // })
-
 
                 let binaize_token = await fetchCall(shop, accessToken)
                     .then(res => {
@@ -102,9 +80,7 @@ app.prepare().then(() => {
         await handle(ctx.req, ctx.res);
         ctx.respond = false;
         ctx.res.statusCode = 200;
-
         console.log(ctx.res.statusCode)
-        return
 
     });
 

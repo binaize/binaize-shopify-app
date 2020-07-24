@@ -4,7 +4,6 @@ import {AppProvider} from '@shopify/polaris';
 import '@shopify/polaris/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
 
-
 class MainApp extends App {
     render() {
         const {Component, pageProps} = this.props;
