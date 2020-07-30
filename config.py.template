@@ -1,13 +1,13 @@
 import os
 
-SHOPIFY_API_KEY = os.getenv("SHOPIFY_API_KEY", "b4c9f2f70cd82821642bda81a2207eed")
-SHOPIFY_SECRET = os.getenv("SHOPIFY_SECRET", "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")
-APP_NAME = os.getenv("APP_NAME", "binaize-analytics-dev")
-SERVER_HOSTNAME = os.getenv("SERVER_HOSTNAME", "49ff9a4f10ea.ngrok.io")
-BASE_URL = os.getenv("BASE_URL", "https://dev.api.binaize.com")
-SIGN_UP = os.getenv("SIGN_UP", "/api/v1/schemas/client/sign_up")
-TOKEN_URL = os.getenv("TOKEN_URL", "/api/v1/schemas/client/token")
-SHOP_URL = os.getenv("SHOP_URL", "/admin/api/2020-07/shop.json")
+SHOPIFY_API_KEY = os.getenv("SHOPIFY_API_KEY", "")
+SHOPIFY_SECRET = os.getenv("SHOPIFY_SECRET", "")
+APP_NAME = os.getenv("APP_NAME", "")
+SERVER_HOSTNAME = os.getenv("SERVER_HOSTNAME", "")
+BASE_URL = os.getenv("BASE_URL", "")
+SIGN_UP = os.getenv("SIGN_UP", "")
+TOKEN_URL = os.getenv("TOKEN_URL", "")
+SHOP_URL = os.getenv("SHOP_URL", "")
 SERVER_BASE_URL = f"https://{SERVER_HOSTNAME}"
 INSTALL_REDIRECT_URL = f"{SERVER_BASE_URL}/app_installed"
 WEBHOOK_APP_UNINSTALL_URL = f"https://{SERVER_HOSTNAME}/app_uninstalled"
