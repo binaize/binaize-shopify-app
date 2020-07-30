@@ -10,7 +10,7 @@ services:
     env_file:
       - hermes.env
     ports:
-      - "3000"
+      - "8000:8000"
   nginx:
     build:
       context: ""

@@ -4,13 +4,6 @@
 # start web service to provide rest end points for this container at 8080
 # --------------------------------------------------------------------------------------------------
 
-printenv > /.env
-npm run build
-pm2 start npm --no-daemon -- start
+gunicorn --pythonpath / -b 0.0.0.0:8000 -k gevent -t 300 -w 1 application_platform.deployment.server:app
 
-# --------------------------------------------------------------------------------------------------
-# to make the container alive for indefinite time
-# --------------------------------------------------------------------------------------------------
-#
-#touch /tmp/a.txt
-#tail -f /tmp/a.txt
+

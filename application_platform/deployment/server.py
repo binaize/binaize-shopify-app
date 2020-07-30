@@ -7,8 +7,8 @@ import logging
 import requests
 from flask import Flask, redirect, request, render_template
 
-import helpers
-from shopify_client import ShopifyStoreClient
+from application_platform.src import helpers
+from application_platform.src.shopify_client import ShopifyStoreClient
 
 from config import WEBHOOK_APP_UNINSTALL_URL, BASE_URL, SHOP_URL
 
