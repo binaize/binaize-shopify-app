@@ -1,0 +1,25 @@
+version: "3"
+services:
+  hermes:
+    build:
+      context: ""
+      dockerfile: Dockerfile.hermes
+    image: hermes:latest
+    entrypoint:
+      - /bin/entrypoint.sh
+    env_file:
+      - hermes.env
+    ports:
+      - "3000"
+  nginx:
+    build:
+      context: ""
+      dockerfile: Dockerfile.nginx
+    env_file:
+      - hermes.env
+    ports:
+      - '80:80'
+      - '443:443'
+    links:
+      - hermes
+    restart: always
