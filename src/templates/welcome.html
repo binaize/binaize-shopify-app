@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Welcome to my Shopify app!</title>
+</head>
+
+<body>
+
+{% if shop %}
+<p>Loading...</p>
+
+{% else %}
+
+    <p>Error! Please close the tab and launch from shopify.</p>
+
+{% endif %}
+
+
+<script type="application/javascript">
+
+    console.log("hello there")
+    {#const access_token = new URLSearchParams(window.location.search)#}
+    window.location.href = "https://dev.app.binaize.com/experiment?access_token=" + "{{ accessToken }}";
+    // window.location.href = "localhost:3001?access_token=" + access_token.get("at");
+
+
+</script>
+
+</body>
+</html>
