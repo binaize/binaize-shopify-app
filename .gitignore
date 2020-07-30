@@ -39,3 +39,5 @@ nginx.env
 *.env
 package-lock.json
 .next
+
+venv/
