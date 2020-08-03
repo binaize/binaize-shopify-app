@@ -11,9 +11,11 @@ from application_platform.src import helpers
 from application_platform.src.shopify_client import ShopifyStoreClient
 
 from config import WEBHOOK_APP_UNINSTALL_URL, BASE_URL, SHOP_URL
+from utils.logger.pylogger import get_logger
 
 from config import TOKEN_URL, SIGN_UP
 
+logger = get_logger("server", "INFO")
 app = Flask(__name__)
 
 ACCESS_TOKEN = None
@@ -31,16 +33,13 @@ def app_launched():
     global ACCESS_TOKEN, NONCE
 
     if ACCESS_TOKEN:
-        print()
-        print(ACCESS_TOKEN)
-        print()
+        logger.info(ACCESS_TOKEN)
         shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
             "X-Shopify-Access-Token": ACCESS_TOKEN
         })
 
-        print("SHOP NAME --> ")
-        from pprint import pprint as pp
-        pp(shop_request.json())
+        logger.info("SHOP NAME --> ")
+        logger.info(shop_request.json())
 
         x = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
                           data={
@@ -48,8 +47,8 @@ def app_launched():
                               "password": shop_request.json()["shop"]["id"]
                           })
 
-        print("------------------------")
-        print(x.json()["access_token"])
+        logger.info("------------------------")
+        logger.info(x.json()["access_token"])
 
         return render_template('welcome.html', shop=shop, accessToken=x.json()["access_token"])
 
@@ -86,9 +85,8 @@ def app_installed():
         "X-Shopify-Access-Token": ACCESS_TOKEN
     })
 
-    print("SHOP NAME --> ")
-    from pprint import pprint as pp
-    pp(shop_request.json())
+    logger.info("SHOP NAME --> ")
+    logger.info(shop_request.json())
 
     shopify_client.create_webook(address=WEBHOOK_APP_UNINSTALL_URL, topic="app/uninstalled")
 
@@ -98,12 +96,12 @@ def app_installed():
                                         "company_name": shop_request.json()["shop"]["name"],
                                         "full_name": shop_request.json()["shop"]["name"],
                                         "disabled": False,
-                                        "shopify_app_eg_url": "string",
+                                        "shopify_app_eg_url": ACCESS_TOKEN,
                                         "client_timezone": shop_request.json()["shop"]["timezone"],
                                         "password": shop_request.json()["shop"]["id"]
                                     })
 
-    print(sign_up_request.json())
+    logger.info(sign_up_request.json())
 
     time.sleep(1)
 
@@ -113,8 +111,8 @@ def app_installed():
                           "password": shop_request.json()["shop"]["id"]
                       })
 
-    print("------------------------")
-    print(x.json()["access_token"])
+    logger.info("------------------------")
+    logger.info(x.json()["access_token"])
 
     redirect_url = helpers.generate_post_install_redirect_url(shop=shop, access_token=x.json()["access_token"])
     return redirect(redirect_url, code=302)
@@ -133,7 +131,7 @@ def app_uninstalled():
     webhook_payload = request.get_json()
     logging.error(f"webhook call received {webhook_topic}:\n{json.dumps(webhook_payload, indent=4)}")
 
-    print("UN INSTALLED!")
+    logger.info("UN INSTALLED!")
 
     return "OK"
 
@@ -144,9 +142,3 @@ def data_removal_request():
     # https://shopify.dev/tutorials/add-gdpr-webhooks-to-your-app
     # Clear all personal information you may have stored about the specified shop
     return "OK"
-
-
-if __name__ == '__main__':
-    # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
