@@ -1,14 +1,19 @@
-import json
+import time
 import uuid
+import os
+import json
+import logging
 
 import requests
 from flask import Flask, redirect, request, render_template
 
 from application_platform.src import helpers
 from application_platform.src.shopify_client import ShopifyStoreClient
-from config import TOKEN_URL, SIGN_UP
+
 from config import WEBHOOK_APP_UNINSTALL_URL, BASE_URL, SHOP_URL
 from utils.logger.pylogger import get_logger
+
+from config import TOKEN_URL, SIGN_UP
 
 logger = get_logger("server", "INFO")
 app = Flask(__name__)
@@ -24,15 +29,11 @@ SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
 @app.route('/app_launched', methods=['GET'])
 @helpers.verify_web_call
 def app_launched():
-    logger.info(json.dumps(request.args))
     shop = request.args.get('shop')
-    code = request.args.get('code')
-
     global ACCESS_TOKEN, NONCE
 
-    # ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
-    logger.info(ACCESS_TOKEN)
     if ACCESS_TOKEN:
+        logger.info(ACCESS_TOKEN)
         shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
             "X-Shopify-Access-Token": ACCESS_TOKEN
         })
@@ -43,7 +44,7 @@ def app_launched():
         x = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
                           data={
                               "username": shop_request.json()["shop"]["id"],
-                              "password": shop_request.json()["shop"]["name"]
+                              "password": shop_request.json()["shop"]["id"]
                           })
 
         logger.info("------------------------")
@@ -52,7 +53,7 @@ def app_launched():
         return render_template('welcome.html', shop=shop, accessToken=x.json()["access_token"])
 
     # The NONCE is a single-use random value we send to Shopify so we know the next call from Shopify is valid (see
-    # app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
+    # #app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
     NONCE = uuid.uuid4().hex
     redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=NONCE, access_mode=ACCESS_MODE)
     return redirect(redirect_url, code=302)
@@ -61,7 +62,6 @@ def app_launched():
 @app.route('/app_installed', methods=['GET'])
 @helpers.verify_web_call
 def app_installed():
-    logger.info(json.dumps(request.args))
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app installation started.")
 
@@ -70,13 +70,12 @@ def app_installed():
 
     # Shopify passes our NONCE, created in #app_launched, as the `state` parameter, we need to ensure it matches!
     if state != NONCE:
-        return "Invalid `state` received", 400
+        return "App is already installed", 400
     NONCE = None
 
     # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
     # Using the `code` received from Shopify we can now generate an access token that is specific to the specified `shop` with the
     #   ACCESS_MODE and SCOPES we asked for in #app_installed
-
     shop = request.args.get('shop')
     code = request.args.get('code')
     ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
@@ -130,7 +129,6 @@ def app_installed():
 @app.route('/app_uninstalled', methods=['POST'])
 @helpers.verify_webhook_call
 def app_uninstalled():
-    logger.info(json.dumps(request.args))
     # https://shopify.dev/docs/admin-api/rest/reference/events/webhook?api[version]=2020-04
     # Someone uninstalled your app, clean up anything you need to
     # NOTE the shop ACCESS_TOKEN is now void!
