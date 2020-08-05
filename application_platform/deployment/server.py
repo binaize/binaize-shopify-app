@@ -95,12 +95,14 @@ def app_installed():
     logger.info("shop id : {shop_id}".format(shop_id=shop_id))
     logger.info("shop name : {shop_name}".format(shop_name=shop_name))
     logger.info("shop email : {shop_email}".format(shop_email=shop_email))
+    logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=ACCESS_TOKEN))
+
 
     shopify_client.create_webook(address=WEBHOOK_APP_UNINSTALL_URL, topic="app/uninstalled")
 
     requests.post(BASE_URL + SIGN_UP,
                   json={
-                      "shop_name": shop_name,
+                      "shop_id": shop_id,
                       "shopify_access_token": ACCESS_TOKEN
                   })
 
@@ -111,7 +113,6 @@ def app_installed():
                                    })
 
     binaize_access_token = token_response.json()["access_token"]
-    logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=ACCESS_TOKEN))
     logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
 
     redirect_url = helpers.generate_post_install_redirect_url(shop=shop, access_token=binaize_access_token)
