@@ -53,8 +53,8 @@ def app_launched():
 
     # The NONCE is a single-use random value we send to Shopify so we know the next call from Shopify is valid (see
     # app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
-    nonce = uuid.uuid4().hex
-    redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=nonce, access_mode=ACCESS_MODE)
+    NONCE = uuid.uuid4().hex
+    redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=NONCE, access_mode=ACCESS_MODE)
     return redirect(redirect_url, code=302)
 
 
@@ -65,17 +65,17 @@ def app_installed():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app installation started.")
 
-    # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
-    # Using the `code` received from Shopify we can now generate an access token that is specific to the specified `shop` with the
-    #   ACCESS_MODE and SCOPES we asked for in #app_installed
+    state = request.args.get('state')
     global NONCE, ACCESS_TOKEN
 
     # Shopify passes our NONCE, created in #app_launched, as the `state` parameter, we need to ensure it matches!
-    state = request.args.get('state')
-
     if state != NONCE:
         return "Invalid `state` received", 400
     NONCE = None
+
+    # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
+    # Using the `code` received from Shopify we can now generate an access token that is specific to the specified `shop` with the
+    #   ACCESS_MODE and SCOPES we asked for in #app_installed
 
     shop = request.args.get('shop')
     code = request.args.get('code')
