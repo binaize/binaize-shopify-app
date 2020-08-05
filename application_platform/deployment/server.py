@@ -1,23 +1,20 @@
-import time
-import uuid
-import os
 import json
-import logging
+import uuid
 
 import requests
 from flask import Flask, redirect, request, render_template
 
 from application_platform.src import helpers
 from application_platform.src.shopify_client import ShopifyStoreClient
-
+from config import TOKEN_URL, SIGN_UP
 from config import WEBHOOK_APP_UNINSTALL_URL, BASE_URL, SHOP_URL
 from utils.logger.pylogger import get_logger
-
-from config import TOKEN_URL, SIGN_UP
 
 logger = get_logger("server", "INFO")
 app = Flask(__name__)
 
+ACCESS_TOKEN = None
+NONCE = None
 ACCESS_MODE = []  # Defaults to offline access mode if left blank or omitted.
 # https://shopify.dev/concepts/about-apis/authentication#api-access-modes
 SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
@@ -31,7 +28,9 @@ def app_launched():
     shop = request.args.get('shop')
     code = request.args.get('code')
 
-    ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
+    global ACCESS_TOKEN, NONCE
+
+    # ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
     logger.info(ACCESS_TOKEN)
     if ACCESS_TOKEN:
         shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
@@ -69,6 +68,15 @@ def app_installed():
     # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
     # Using the `code` received from Shopify we can now generate an access token that is specific to the specified `shop` with the
     #   ACCESS_MODE and SCOPES we asked for in #app_installed
+    global NONCE, ACCESS_TOKEN
+
+    # Shopify passes our NONCE, created in #app_launched, as the `state` parameter, we need to ensure it matches!
+    state = request.args.get('state')
+
+    if state != NONCE:
+        return "Invalid `state` received", 400
+    NONCE = None
+
     shop = request.args.get('shop')
     code = request.args.get('code')
     ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
@@ -128,6 +136,9 @@ def app_uninstalled():
     # NOTE the shop ACCESS_TOKEN is now void!
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app uninstallation started.")
+
+    global ACCESS_TOKEN
+    ACCESS_TOKEN = None
 
     webhook_topic = request.headers.get('X-Shopify-Topic')
     shop_details = request.get_json()
