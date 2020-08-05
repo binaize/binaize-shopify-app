@@ -111,8 +111,8 @@ def app_installed():
 
     token_response = requests.post(BASE_URL + TOKEN_URL,
                                    data={
-                                       "username": shop_details.json()["shop"]["id"],
-                                       "password": shop_details.json()["shop"]["id"]
+                                       "username": shop_id,
+                                       "password": shop_name
                                    })
 
     binaize_access_token = token_response.json()["access_token"]
