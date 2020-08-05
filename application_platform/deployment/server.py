@@ -152,19 +152,7 @@ def app_uninstalled():
     logger.info("shop name : {shop_name}".format(shop_name=shop_name))
     logger.info("shop email : {shop_email}".format(shop_email=shop_email))
 
-    sign_up_response = requests.post(BASE_URL + SIGN_UP,
-                                     json={
-                                         "client_id": shop_id,
-                                         "shopify_store": shop_name,
-                                         "shopify_access_token": "ACCESS_TOKEN"
-                                     })
-
-    sign_up_message = sign_up_response.json()["message"]
-    logger.info(sign_up_message)
-
     DELETE_URL = "/api/v1/schemas/client/delete"
-    x = BASE_URL + DELETE_URL
-    logger.info(x)
     delete_response = requests.post(BASE_URL + DELETE_URL,
                                     json={
                                         "shop_id": shop_id
