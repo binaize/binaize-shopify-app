@@ -29,15 +29,11 @@ SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
 @app.route('/app_launched', methods=['GET'])
 @helpers.verify_web_call
 def app_launched():
-    logger.info(json.dumps(request.args))
     shop = request.args.get('shop')
-    code = request.args.get('code')
-
     global ACCESS_TOKEN, NONCE
 
-    # ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
-    logger.info(ACCESS_TOKEN)
     if ACCESS_TOKEN:
+        logger.info(ACCESS_TOKEN)
         shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
             "X-Shopify-Access-Token": ACCESS_TOKEN
         })
@@ -57,7 +53,7 @@ def app_launched():
         return render_template('welcome.html', shop=shop, accessToken=x.json()["access_token"])
 
     # The NONCE is a single-use random value we send to Shopify so we know the next call from Shopify is valid (see
-    # app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
+    # #app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
     NONCE = uuid.uuid4().hex
     redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=NONCE, access_mode=ACCESS_MODE)
     return redirect(redirect_url, code=302)
