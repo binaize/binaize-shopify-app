@@ -31,6 +31,7 @@ SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
 def app_launched():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app launch started.")
+    logger.info(json.dumps(request.args))
 
     shop = request.args.get('shop')
     global ACCESS_TOKEN, NONCE
@@ -74,6 +75,7 @@ def app_launched():
 def app_installed():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app installation started.")
+    logger.info(json.dumps(request.args))
 
     state = request.args.get('state')
     global NONCE, ACCESS_TOKEN
@@ -144,6 +146,7 @@ def app_uninstalled():
     # NOTE the shop ACCESS_TOKEN is now void!
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app uninstallation started.")
+    logger.info(json.dumps(request.args))
 
     global ACCESS_TOKEN
     ACCESS_TOKEN = None
