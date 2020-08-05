@@ -155,7 +155,9 @@ def app_uninstalled():
     DELETE_URL = "/api/v1/schemas/client/delete"
     delete_response = requests.post(BASE_URL + DELETE_URL,
                                     json={
-                                        "shop_id": shop_id
+                                        "client_id": shop_id,
+                                        "shopify_store": shop_name,
+                                        "shopify_access_token": "invalid"
                                     })
 
     delete_message = delete_response.json()["message"]
