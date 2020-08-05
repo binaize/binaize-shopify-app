@@ -88,8 +88,8 @@ def app_installed():
         "X-Shopify-Access-Token": ACCESS_TOKEN
     })
 
-    shop_name = shop_request["shop"]["name"]
-    shop_email = shop_request["shop"]["email"]
+    shop_name = shop_request.json()["shop"]["name"]
+    shop_email = shop_request.json()["shop"]["email"]
 
     logger.info("shop name : {shop_name}".format(shop_name=shop_name))
     logger.info("shop email : {shop_email}".format(shop_email=shop_email))
