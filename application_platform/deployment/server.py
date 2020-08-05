@@ -144,9 +144,9 @@ def app_uninstalled():
                                                                               shop_details=json.dumps(
                                                                                   shop_details)))
 
-    shop_name = shop_details.json()["shop"]["name"]
-    shop_email = shop_details.json()["shop"]["email"]
-    shop_id = shop_details.json()["shop"]["id"]
+    shop_name = shop_details["name"]
+    shop_email = shop_details["email"]
+    shop_id = shop_details["id"]
 
     logger.info("shop id : {shop_id}".format(shop_id=shop_id))
     logger.info("shop name : {shop_name}".format(shop_name=shop_name))
