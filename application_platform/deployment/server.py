@@ -63,7 +63,7 @@ def app_launched():
 @helpers.verify_web_call
 def app_installed():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
-    logger.info("app installation starts.")
+    logger.info("app installation started.")
 
     state = request.args.get('state')
     global NONCE, ACCESS_TOKEN
@@ -84,13 +84,15 @@ def app_installed():
     # NOTE This webhook will call the #app_uninstalled function defined below
     shopify_client = ShopifyStoreClient(shop=shop, access_token=ACCESS_TOKEN)
 
-    shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
+    shop_details = requests.get(f"https://{shop}" + SHOP_URL, headers={
         "X-Shopify-Access-Token": ACCESS_TOKEN
     })
 
-    shop_name = shop_request.json()["shop"]["name"]
-    shop_email = shop_request.json()["shop"]["email"]
+    shop_name = shop_details.json()["shop"]["name"]
+    shop_email = shop_details.json()["shop"]["email"]
+    shop_id = shop_details.json()["shop"]["id"]
 
+    logger.info("shop id : {shop_id}".format(shop_id=shop_id))
     logger.info("shop name : {shop_name}".format(shop_name=shop_name))
     logger.info("shop email : {shop_email}".format(shop_email=shop_email))
 
@@ -98,30 +100,23 @@ def app_installed():
 
     requests.post(BASE_URL + SIGN_UP,
                   json={
-                      "client_id": shop_request.json()["shop"]["id"],
-                      "company_name": shop_request.json()["shop"]["name"],
-                      "full_name": shop_request.json()["shop"]["name"],
-                      "disabled": False,
-                      "shopify_app_eg_url": ACCESS_TOKEN,
-                      "client_timezone": shop_request.json()["shop"]["timezone"],
-                      "password": shop_request.json()["shop"]["id"]
+                      "shop_name": shop_name,
+                      "shopify_access_token": ACCESS_TOKEN
                   })
 
-    time.sleep(1)
+    token_response = requests.post(BASE_URL + TOKEN_URL,
+                                   data={
+                                       "username": shop_details.json()["shop"]["id"],
+                                       "password": shop_details.json()["shop"]["id"]
+                                   })
 
-    x = requests.post(BASE_URL + TOKEN_URL,
-                      data={
-                          "username": shop_request.json()["shop"]["id"],
-                          "password": shop_request.json()["shop"]["id"]
-                      })
-
-    binaize_access_token = x.json()["access_token"]
+    binaize_access_token = token_response.json()["access_token"]
     logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=ACCESS_TOKEN))
     logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
 
-    redirect_url = helpers.generate_post_install_redirect_url(shop=shop, access_token=x.json()["access_token"])
+    redirect_url = helpers.generate_post_install_redirect_url(shop=shop, access_token=binaize_access_token)
 
-    logger.info("app installation ends.")
+    logger.info("app installation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
     return redirect(redirect_url, code=302)
@@ -133,14 +128,18 @@ def app_uninstalled():
     # https://shopify.dev/docs/admin-api/rest/reference/events/webhook?api[version]=2020-04
     # Someone uninstalled your app, clean up anything you need to
     # NOTE the shop ACCESS_TOKEN is now void!
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
+    logger.info("app uninstallation started.")
+
     global ACCESS_TOKEN
     ACCESS_TOKEN = None
 
     webhook_topic = request.headers.get('X-Shopify-Topic')
-    webhook_payload = request.get_json()
-    logging.error(f"webhook call received {webhook_topic}:\n{json.dumps(webhook_payload, indent=4)}")
-
-    logger.info("UN INSTALLED!")
+    webhook_payload = json.dumps(request.get_json())
+    logger.info("webhook call received {webhook_topic}:{webhook_payload}".format(webhook_topic=webhook_topic,
+                                                                                 webhook_payload=webhook_payload))
+    logger.info("app uninstallation ended.")
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
     return "OK"
 
