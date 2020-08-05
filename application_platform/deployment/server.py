@@ -44,7 +44,7 @@ def app_launched():
         x = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
                           data={
                               "username": shop_request.json()["shop"]["id"],
-                              "password": shop_request.json()["shop"]["id"]
+                              "password": shop_request.json()["shop"]["name"]
                           })
 
         logger.info("------------------------")
