@@ -97,14 +97,17 @@ def app_installed():
     logger.info("shop email : {shop_email}".format(shop_email=shop_email))
     logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=ACCESS_TOKEN))
 
-
     shopify_client.create_webook(address=WEBHOOK_APP_UNINSTALL_URL, topic="app/uninstalled")
 
-    requests.post(BASE_URL + SIGN_UP,
-                  json={
-                      "shop_id": shop_id,
-                      "shopify_access_token": ACCESS_TOKEN
-                  })
+    sign_up_response = requests.post(BASE_URL + SIGN_UP,
+                                     json={
+                                         "client_id": shop_id,
+                                         "shopify_store": shop_name,
+                                         "shopify_access_token": ACCESS_TOKEN
+                                     })
+
+    sign_up_message = sign_up_response.json()["message"]
+    logger.info(sign_up_message)
 
     token_response = requests.post(BASE_URL + TOKEN_URL,
                                    data={
@@ -136,9 +139,28 @@ def app_uninstalled():
     ACCESS_TOKEN = None
 
     webhook_topic = request.headers.get('X-Shopify-Topic')
-    webhook_payload = json.dumps(request.get_json())
-    logger.info("webhook call received {webhook_topic}:{webhook_payload}".format(webhook_topic=webhook_topic,
-                                                                                 webhook_payload=webhook_payload))
+    shop_details = request.get_json()
+    logger.info("webhook call received {webhook_topic}:{shop_details}".format(webhook_topic=webhook_topic,
+                                                                              shop_details=json.dumps(
+                                                                                  shop_details)))
+
+    shop_name = shop_details.json()["shop"]["name"]
+    shop_email = shop_details.json()["shop"]["email"]
+    shop_id = shop_details.json()["shop"]["id"]
+
+    logger.info("shop id : {shop_id}".format(shop_id=shop_id))
+    logger.info("shop name : {shop_name}".format(shop_name=shop_name))
+    logger.info("shop email : {shop_email}".format(shop_email=shop_email))
+
+    DELETE_URL = "/api/v1/schemas/client/delete"
+    delete_response = requests.post(BASE_URL + DELETE_URL,
+                                    json={
+                                        "shop_id": shop_id
+                                    })
+
+    delete_message = delete_response.json()["message"]
+    logger.info(delete_message)
+
     logger.info("app uninstallation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
