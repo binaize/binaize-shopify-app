@@ -29,11 +29,16 @@ SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
 @app.route('/app_launched', methods=['GET'])
 @helpers.verify_web_call
 def app_launched():
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
+    logger.info("app launch started.")
+
     shop = request.args.get('shop')
     global ACCESS_TOKEN, NONCE
 
+    logger.info(ACCESS_TOKEN)
+
     if ACCESS_TOKEN:
-        logger.info(ACCESS_TOKEN)
+
         shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
             "X-Shopify-Access-Token": ACCESS_TOKEN
         })
@@ -56,6 +61,11 @@ def app_launched():
     # #app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
     NONCE = uuid.uuid4().hex
     redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=NONCE, access_mode=ACCESS_MODE)
+
+    logger.info("app launch ended.")
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
+
+
     return redirect(redirect_url, code=302)
 
 
