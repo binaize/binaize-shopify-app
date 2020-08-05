@@ -61,6 +61,7 @@ def app_launched():
 @app.route('/app_installed', methods=['GET'])
 @helpers.verify_web_call
 def app_installed():
+    logger.info(json.dumps(request.args))
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app installation started.")
 
@@ -120,6 +121,7 @@ def app_installed():
 @app.route('/app_uninstalled', methods=['POST'])
 @helpers.verify_webhook_call
 def app_uninstalled():
+    logger.info(json.dumps(request.args))
     # https://shopify.dev/docs/admin-api/rest/reference/events/webhook?api[version]=2020-04
     # Someone uninstalled your app, clean up anything you need to
     # NOTE the shop ACCESS_TOKEN is now void!
