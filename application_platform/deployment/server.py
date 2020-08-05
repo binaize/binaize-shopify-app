@@ -33,29 +33,30 @@ def app_launched():
 
     ACCESS_TOKEN = ShopifyStoreClient.authenticate(shop=shop, code=code)
     logger.info(ACCESS_TOKEN)
-    shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
-        "X-Shopify-Access-Token": ACCESS_TOKEN
-    })
+    if ACCESS_TOKEN:
+        shop_request = requests.get(f"https://{shop}" + SHOP_URL, headers={
+            "X-Shopify-Access-Token": ACCESS_TOKEN
+        })
 
-    logger.info("SHOP NAME --> ")
-    logger.info(shop_request.json())
+        logger.info("SHOP NAME --> ")
+        logger.info(shop_request.json())
 
-    x = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
-                      data={
-                          "username": shop_request.json()["shop"]["id"],
-                          "password": shop_request.json()["shop"]["name"]
-                      })
+        x = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
+                          data={
+                              "username": shop_request.json()["shop"]["id"],
+                              "password": shop_request.json()["shop"]["name"]
+                          })
 
-    logger.info("------------------------")
-    logger.info(x.json()["access_token"])
+        logger.info("------------------------")
+        logger.info(x.json()["access_token"])
 
-    return render_template('welcome.html', shop=shop, accessToken=x.json()["access_token"])
+        return render_template('welcome.html', shop=shop, accessToken=x.json()["access_token"])
 
     # The NONCE is a single-use random value we send to Shopify so we know the next call from Shopify is valid (see
-    # #app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
-    # nonce = uuid.uuid4().hex
-    # redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=nonce, access_mode=ACCESS_MODE)
-    # return redirect(redirect_url, code=302)
+    # app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
+    nonce = uuid.uuid4().hex
+    redirect_url = helpers.generate_install_redirect_url(shop=shop, scopes=SCOPES, nonce=nonce, access_mode=ACCESS_MODE)
+    return redirect(redirect_url, code=302)
 
 
 @app.route('/app_installed', methods=['GET'])
