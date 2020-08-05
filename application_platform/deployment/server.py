@@ -62,12 +62,15 @@ def app_launched():
 @app.route('/app_installed', methods=['GET'])
 @helpers.verify_web_call
 def app_installed():
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
+    logger.info("app installation starts.")
+
     state = request.args.get('state')
     global NONCE, ACCESS_TOKEN
 
     # Shopify passes our NONCE, created in #app_launched, as the `state` parameter, we need to ensure it matches!
     if state != NONCE:
-        return "Invalid `state` received", 400
+        return "App is already installed", 400
     NONCE = None
 
     # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
@@ -85,23 +88,24 @@ def app_installed():
         "X-Shopify-Access-Token": ACCESS_TOKEN
     })
 
-    logger.info("SHOP NAME --> ")
-    logger.info(shop_request.json())
+    shop_name = shop_request["shop"]["name"]
+    shop_email = shop_request["shop"]["email"]
+
+    logger.info("shop name : {shop_name}".format(shop_name=shop_name))
+    logger.info("shop email : {shop_email}".format(shop_email=shop_email))
 
     shopify_client.create_webook(address=WEBHOOK_APP_UNINSTALL_URL, topic="app/uninstalled")
 
-    sign_up_request = requests.post(BASE_URL + SIGN_UP,
-                                    json={
-                                        "client_id": shop_request.json()["shop"]["id"],
-                                        "company_name": shop_request.json()["shop"]["name"],
-                                        "full_name": shop_request.json()["shop"]["name"],
-                                        "disabled": False,
-                                        "shopify_app_eg_url": ACCESS_TOKEN,
-                                        "client_timezone": shop_request.json()["shop"]["timezone"],
-                                        "password": shop_request.json()["shop"]["id"]
-                                    })
-
-    logger.info(sign_up_request.json())
+    requests.post(BASE_URL + SIGN_UP,
+                  json={
+                      "client_id": shop_request.json()["shop"]["id"],
+                      "company_name": shop_request.json()["shop"]["name"],
+                      "full_name": shop_request.json()["shop"]["name"],
+                      "disabled": False,
+                      "shopify_app_eg_url": ACCESS_TOKEN,
+                      "client_timezone": shop_request.json()["shop"]["timezone"],
+                      "password": shop_request.json()["shop"]["id"]
+                  })
 
     time.sleep(1)
 
@@ -111,10 +115,15 @@ def app_installed():
                           "password": shop_request.json()["shop"]["id"]
                       })
 
-    logger.info("------------------------")
-    logger.info(x.json()["access_token"])
+    binaize_access_token = x.json()["access_token"]
+    logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=ACCESS_TOKEN))
+    logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
 
     redirect_url = helpers.generate_post_install_redirect_url(shop=shop, access_token=x.json()["access_token"])
+
+    logger.info("app installation ends.")
+    logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
+
     return redirect(redirect_url, code=302)
 
 
