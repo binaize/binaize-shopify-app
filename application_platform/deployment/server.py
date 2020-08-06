@@ -13,7 +13,7 @@ from utils.logger.pylogger import get_logger
 logger = get_logger("server", "INFO")
 app = Flask(__name__)
 
-shop_to_access_token_nonce_dict = dict()
+app.shop_to_access_token_nonce_dict = dict()
 ACCESS_MODE = []  # Defaults to offline access mode if left blank or omitted
 # https://shopify.dev/concepts/about-apis/authentication#api-access-modes
 SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
@@ -27,13 +27,13 @@ def app_launched():
     logger.info("app launch started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
     logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
     shopify_domain = request.args.get('shop')
-    shopify_access_token = shop_to_access_token_nonce_dict[shopify_domain][
-        0] if shopify_domain in shop_to_access_token_nonce_dict else None
-    nonce = shop_to_access_token_nonce_dict[shopify_domain][
-        1] if shopify_domain in shop_to_access_token_nonce_dict else None
+    shopify_access_token = app.shop_to_access_token_nonce_dict[shopify_domain][
+        0] if shopify_domain in app.shop_to_access_token_nonce_dict else None
+    nonce = app.shop_to_access_token_nonce_dict[shopify_domain][
+        1] if shopify_domain in app.shop_to_access_token_nonce_dict else None
 
     logger.info("shopify_domain : {shopify_domain}".format(shopify_domain=shopify_domain))
     logger.info("shopify_access_token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
@@ -70,7 +70,7 @@ def app_launched():
 
         logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
         logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-            shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+            shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
         logger.info("app launched for already installed app.")
         logger.info("app launch ended.")
         logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
@@ -84,10 +84,10 @@ def app_launched():
         redirect_url = helpers.generate_install_redirect_url(shop=shopify_domain, scopes=SCOPES, nonce=nonce,
                                                              access_mode=ACCESS_MODE)
 
-        shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
+        app.shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
 
         logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-            shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+            shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
         logger.info("redirecting to app installation url.")
         logger.info("app launch ended.")
         logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
@@ -102,16 +102,16 @@ def app_installed():
     logger.info("app installation started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
     logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
     state = request.args.get('state')
     shopify_domain = request.args.get('shop')
     code = request.args.get('code')
 
-    shopify_access_token = shop_to_access_token_nonce_dict[shopify_domain][
-        0] if shopify_domain in shop_to_access_token_nonce_dict else None
-    nonce = shop_to_access_token_nonce_dict[shopify_domain][
-        1] if shopify_domain in shop_to_access_token_nonce_dict else None
+    shopify_access_token = app.shop_to_access_token_nonce_dict[shopify_domain][
+        0] if shopify_domain in app.shop_to_access_token_nonce_dict else None
+    nonce = app.shop_to_access_token_nonce_dict[shopify_domain][
+        1] if shopify_domain in app.shop_to_access_token_nonce_dict else None
 
     logger.info("shopify_domain : {shopify_domain}".format(shopify_domain=shopify_domain))
     logger.info("shopify_access_token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
@@ -131,7 +131,7 @@ def app_installed():
     shopify_access_token = ShopifyStoreClient.authenticate(shop=shopify_domain, code=code)
     logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
 
-    shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
+    app.shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
 
     # We have an access token! Now let's register a webhook so Shopify will notify us if/when the app gets uninstalled
     # NOTE This webhook will call the #app_uninstalled function defined below
@@ -179,7 +179,7 @@ def app_installed():
     redirect_url = helpers.generate_post_install_redirect_url(shop=shopify_domain, access_token=binaize_access_token)
 
     logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
     logger.info("app installation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
@@ -196,7 +196,7 @@ def app_uninstalled():
     logger.info("app uninstallation started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
     logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
     webhook_topic = request.headers.get('X-Shopify-Topic')
     shop_details = request.get_json()
@@ -207,7 +207,7 @@ def app_uninstalled():
     shop_id = shop_details["id"]
     shopify_domain = shop_details["myshopify_domain"]
 
-    shop_to_access_token_nonce_dict.pop(shopify_domain, None)
+    app.shop_to_access_token_nonce_dict.pop(shopify_domain, None)
 
     logger.info("shop id : {shop_id}".format(shop_id=shop_id))
     logger.info("shop domain : {shopify_domain}".format(shopify_domain=shopify_domain))
@@ -224,7 +224,7 @@ def app_uninstalled():
     logger.info("deletion message : {delete_message}".format(delete_message=delete_message))
 
     logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(shop_to_access_token_nonce_dict)))
+        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
     logger.info("app uninstallation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
