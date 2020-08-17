@@ -8,7 +8,7 @@ import base64
 import hashlib
 from flask import request, abort
 
-from config import SHOPIFY_SECRET, SHOPIFY_API_KEY, INSTALL_REDIRECT_URL
+from config import SHOPIFY_SECRET, SHOPIFY_API_KEY, INSTALL_REDIRECT_URL, BINAIZE_APP_URL
 
 
 def generate_install_redirect_url(shop: str, scopes: List, nonce: str, access_mode: List):
@@ -20,7 +20,7 @@ def generate_install_redirect_url(shop: str, scopes: List, nonce: str, access_mo
 
 def generate_post_install_redirect_url(shop: str, access_token: str):
     # redirect_url = f"https://{shop}/admin/apps/{APP_NAME}"
-    redirect_url = f"https://dev.app.binaize.com/experiment?access_token=" + access_token
+    redirect_url = BINAIZE_APP_URL + "/experiment?access_token=" + access_token
     return redirect_url
 
 
@@ -40,6 +40,7 @@ def verify_web_call(f):
             logging.error(f"Shop name received is invalid: \n\tshop {shop}")
             abort(401)
         return f(*args, **kwargs)
+
     return wrapper
 
 
@@ -54,6 +55,7 @@ def verify_webhook_call(f):
             logging.error(f"HMAC could not be verified: \n\thmac {hmac}\n\tdata {data}")
             abort(401)
         return f(*args, **kwargs)
+
     return wrapper
 
 

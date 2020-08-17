@@ -7,15 +7,12 @@ from flask import Flask, redirect, request, render_template
 from application_platform.src import helpers
 from application_platform.src.shopify_client import ShopifyStoreClient
 from config import TOKEN_URL, SIGN_UP
-from config import WEBHOOK_APP_UNINSTALL_URL, BASE_URL, SHOP_URL
+from config import WEBHOOK_APP_UNINSTALL_URL, BINAIZE_API_URL
 from utils.logger.pylogger import get_logger
 
 logger = get_logger("server", "INFO")
 app = Flask(__name__)
 
-app.shop_to_access_token_nonce_dict = dict()
-ACCESS_MODE = []  # Defaults to offline access mode if left blank or omitted
-# https://shopify.dev/concepts/about-apis/authentication#api-access-modes
 SCOPES = ['read_products', "read_orders", "read_themes", "write_themes",
           "read_customers"]  # https://shopify.dev/docs/admin-api/access-scopes
 
@@ -26,41 +23,33 @@ def app_launched():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app launch started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
-    logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
-    shopify_domain = request.args.get('shop')
-    shopify_access_token = app.shop_to_access_token_nonce_dict[shopify_domain][
-        0] if shopify_domain in app.shop_to_access_token_nonce_dict else None
-    nonce = app.shop_to_access_token_nonce_dict[shopify_domain][
-        1] if shopify_domain in app.shop_to_access_token_nonce_dict else None
+    shop_id = request.args.get('shop')
 
-    logger.info("shopify_domain : {shopify_domain}".format(shopify_domain=shopify_domain))
-    logger.info("shopify_access_token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
-    logger.info("nonce : {nonce}".format(nonce=nonce))
+    binaize_shop_details_response = requests.get(
+        "https://dev.api.binaize.com/api/v1/schemas/shop/shopify_details?shop_id=" + shop_id)
+    binaize_shop_details = binaize_shop_details_response.json()
+    logger.info(
+        "binaize_shop_details : {binaize_shop_details}".format(binaize_shop_details=json.dumps(binaize_shop_details)))
+
+    if binaize_shop_details is not None:
+        shopify_access_token = binaize_shop_details["shopify_access_token"]
+        shopify_nonce = binaize_shop_details["shopify_nonce"]
+    else:
+        shopify_access_token = None
+        shopify_nonce = None
+
+    logger.info("shopify domain : {shopify_domain}".format(shopify_domain=shop_id))
+    logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
+    logger.info("shopify nonce : {shopify_nonce}".format(shopify_nonce=shopify_nonce))
 
     if shopify_access_token:
-        shop_details_url = "https://{shopify_domain}{shop_url}".format(shopify_domain=shopify_domain, shop_url=SHOP_URL)
-        logger.info("shop_details_url : {shop_details_url}".format(shop_details_url=shop_details_url))
-
-        shop_details_response = requests.get(shop_details_url, headers={
-            "X-Shopify-Access-Token": shopify_access_token
-        })
-
-        logger.info("shop details : {shop_details}".format(shop_details=shop_details_response.json()))
-
-        shop_id = shop_details_response.json()["shop"]["id"]
-
         logger.info("shop_id : {shop_id}".format(shop_id=shop_id))
-        logger.info("shopify_domain : {shopify_domain}".format(shopify_domain=shopify_domain))
 
-        shop_details_url = "https://{shopify_domain}{shop_url}".format(shopify_domain=shopify_domain, shop_url=SHOP_URL)
-        logger.info("shop_details_url : {shop_details_url}".format(shop_details_url=shop_details_url))
-
-        binaize_token_response = requests.post('https://dev.api.binaize.com' + TOKEN_URL,
+        binaize_token_response = requests.post(BINAIZE_API_URL + TOKEN_URL,
                                                data={
                                                    "username": shop_id,
-                                                   "password": shopify_domain
+                                                   "password": shop_id
                                                })
 
         logger.info("binaize_token_response : {binaize_token_response}".format(
@@ -69,25 +58,30 @@ def app_launched():
         binaize_access_token = binaize_token_response.json()["access_token"]
 
         logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
-        logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-            shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
         logger.info("app launched for already installed app.")
         logger.info("app launch ended.")
         logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
-        return render_template('welcome.html', shop=shopify_domain, accessToken=binaize_access_token)
+        return render_template('welcome.html', shop=shop_id, accessToken=binaize_access_token)
 
     else:
-        # The NONCE is a single-use random value we send to Shopify so we know the next call from Shopify is valid (see
-        # #app_installed) https://en.wikipedia.org/wiki/Cryptographic_nonce
-        nonce = uuid.uuid4().hex
-        redirect_url = helpers.generate_install_redirect_url(shop=shopify_domain, scopes=SCOPES, nonce=nonce,
-                                                             access_mode=ACCESS_MODE)
+        shopify_nonce = uuid.uuid4().hex
+        redirect_url = helpers.generate_install_redirect_url(shop=shop_id, scopes=SCOPES, nonce=shopify_nonce,
+                                                             access_mode=[])
 
-        app.shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
+        binaize_nonce_response = requests.post(
+            BINAIZE_API_URL + "/api/v1/schemas/shop/nonce/update",
+            json={
+                "shop_id": shop_id,
+                "shopify_nonce": shopify_nonce
+            })
 
-        logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-            shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
+        logger.info("binaize nonce response : {binaize_nonce_response}".format(
+            binaize_nonce_response=binaize_nonce_response.json()))
+        binaize_nonce_message = binaize_nonce_response.json()["message"]
+        logger.info(
+            "binaize_nonce_message : {binaize_nonce_message}".format(binaize_nonce_message=binaize_nonce_message))
+
         logger.info("redirecting to app installation url.")
         logger.info("app launch ended.")
         logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
@@ -101,62 +95,42 @@ def app_installed():
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app installation started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
-    logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
     state = request.args.get('state')
-    shopify_domain = request.args.get('shop')
+    shop_id = request.args.get('shop')
     code = request.args.get('code')
 
-    shopify_access_token = app.shop_to_access_token_nonce_dict[shopify_domain][
-        0] if shopify_domain in app.shop_to_access_token_nonce_dict else None
-    nonce = app.shop_to_access_token_nonce_dict[shopify_domain][
-        1] if shopify_domain in app.shop_to_access_token_nonce_dict else None
+    binaize_shop_details_response = requests.get(
+        "https://dev.api.binaize.com/api/v1/schemas/shop/shopify_details?shop_id=" + shop_id)
+    binaize_shop_details = binaize_shop_details_response.json()
+    logger.info(
+        "binaize_shop_details : {binaize_shop_details}".format(binaize_shop_details=json.dumps(binaize_shop_details)))
 
-    logger.info("shopify_domain : {shopify_domain}".format(shopify_domain=shopify_domain))
+    if binaize_shop_details is not None:
+        shopify_access_token = binaize_shop_details["shopify_access_token"]
+        shopify_nonce = binaize_shop_details["shopify_nonce"]
+    else:
+        shopify_access_token = None
+        shopify_nonce = None
+
+    logger.info("shop_id : {shop_id}".format(shop_id=shop_id))
     logger.info("shopify_access_token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
-    logger.info("nonce : {nonce}".format(nonce=nonce))
+    logger.info("shopify_nonce : {shopify_nonce}".format(shopify_nonce=shopify_nonce))
     logger.info("state : {state}".format(state=state))
     logger.info("code : {code}".format(code=code))
 
-    # Shopify passes our NONCE, created in #app_launched, as the `state` parameter, we need to ensure it matches!
-    if state != nonce:
+    if state != shopify_nonce:
         return "App is already installed", 400
-    nonce = None
 
-    # Ok, NONCE matches, we can get rid of it now (a nonce, by definition, should only be used once)
-    # Using the `code` received from Shopify we can now generate an access token that is specific to the specified `shop` with the
-    #   ACCESS_MODE and SCOPES we asked for in #app_installed
-
-    shopify_access_token = ShopifyStoreClient.authenticate(shop=shopify_domain, code=code)
+    shopify_access_token = ShopifyStoreClient.authenticate(shop=shop_id, code=code)
     logger.info("shopify access token : {shopify_access_token}".format(shopify_access_token=shopify_access_token))
 
-    app.shop_to_access_token_nonce_dict[shopify_domain] = (shopify_access_token, nonce)
-
-    # We have an access token! Now let's register a webhook so Shopify will notify us if/when the app gets uninstalled
-    # NOTE This webhook will call the #app_uninstalled function defined below
-    shopify_client = ShopifyStoreClient(shop=shopify_domain, access_token=shopify_access_token)
-
-    shop_details_url = "https://{shopify_domain}{shop_url}".format(shopify_domain=shopify_domain, shop_url=SHOP_URL)
-    logger.info("shop_details_url : {shop_details_url}".format(shop_details_url=shop_details_url))
-
-    shop_details_response = requests.get(shop_details_url, headers={
-        "X-Shopify-Access-Token": shopify_access_token
-    })
-
-    logger.info("shop details : {shop_details}".format(shop_details=shop_details_response.json()))
-
-    shop_id = shop_details_response.json()["shop"]["id"]
-
-    logger.info("shop id : {shop_id}".format(shop_id=shop_id))
-    logger.info("shop domain : {shopify_domain}".format(shopify_domain=shopify_domain))
-
+    shopify_client = ShopifyStoreClient(shop=shop_id, access_token=shopify_access_token)
     shopify_client.create_webook(address=WEBHOOK_APP_UNINSTALL_URL, topic="app/uninstalled")
 
-    sign_up_response = requests.post(BASE_URL + SIGN_UP,
+    sign_up_response = requests.post(BINAIZE_API_URL + SIGN_UP,
                                      json={
-                                         "client_id": shop_id,
-                                         "shopify_store": shopify_domain,
+                                         "shop_id": shop_id,
                                          "shopify_access_token": shopify_access_token
                                      })
 
@@ -164,10 +138,10 @@ def app_installed():
     sign_up_message = sign_up_response.json()["message"]
     logger.info("sign_up_message : {sign_up_message}".format(sign_up_message=sign_up_message))
 
-    binaize_token_response = requests.post(BASE_URL + TOKEN_URL,
+    binaize_token_response = requests.post(BINAIZE_API_URL + TOKEN_URL,
                                            data={
                                                "username": shop_id,
-                                               "password": shopify_domain
+                                               "password": shop_id
                                            })
 
     logger.info("binaize_token_response : {binaize_token_response}".format(
@@ -176,10 +150,8 @@ def app_installed():
     binaize_access_token = binaize_token_response.json()["access_token"]
     logger.info("binaize access token : {binaize_access_token}".format(binaize_access_token=binaize_access_token))
 
-    redirect_url = helpers.generate_post_install_redirect_url(shop=shopify_domain, access_token=binaize_access_token)
+    redirect_url = helpers.generate_post_install_redirect_url(shop=shop_id, access_token=binaize_access_token)
 
-    logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
     logger.info("app installation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
@@ -189,14 +161,9 @@ def app_installed():
 @app.route('/app_uninstalled', methods=['POST'])
 @helpers.verify_webhook_call
 def app_uninstalled():
-    # https://shopify.dev/docs/admin-api/rest/reference/events/webhook?api[version]=2020-04
-    # Someone uninstalled your app, clean up anything you need to
-    # NOTE the shop ACCESS_TOKEN is now void!
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
     logger.info("app uninstallation started.")
     logger.info("request args : {request_args}".format(request_args=json.dumps(request.args)))
-    logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
 
     webhook_topic = request.headers.get('X-Shopify-Topic')
     shop_details = request.get_json()
@@ -204,27 +171,20 @@ def app_uninstalled():
                                                                               shop_details=json.dumps(
                                                                                   shop_details)))
 
-    shop_id = shop_details["id"]
-    shopify_domain = shop_details["myshopify_domain"]
-
-    app.shop_to_access_token_nonce_dict.pop(shopify_domain, None)
+    shop_id = shop_details["myshopify_domain"]
 
     logger.info("shop id : {shop_id}".format(shop_id=shop_id))
-    logger.info("shop domain : {shopify_domain}".format(shopify_domain=shopify_domain))
 
-    DELETE_URL = "/api/v1/schemas/client/delete"
-    delete_response = requests.post(BASE_URL + DELETE_URL,
+    DELETE_URL = "/api/v1/schemas/shop/delete"
+    delete_response = requests.post(BINAIZE_API_URL + DELETE_URL,
                                     json={
-                                        "client_id": shop_id,
-                                        "shopify_store": shopify_domain,
+                                        "shop_id": shop_id,
                                         "shopify_access_token": "invalid"
                                     })
 
     delete_message = delete_response.json()["message"]
     logger.info("deletion message : {delete_message}".format(delete_message=delete_message))
 
-    logger.info("shop_to_access_token_nonce_dict : {shop_to_access_token_nonce_dict}".format(
-        shop_to_access_token_nonce_dict=json.dumps(app.shop_to_access_token_nonce_dict)))
     logger.info("app uninstallation ended.")
     logger.info("{hash}".format(hash="".join(["#" for i in range(60)])))
 
@@ -238,3 +198,6 @@ def data_removal_request():
     # Clear all personal information you may have stored about the specified shop
     return "OK"
 
+
+if __name__ == "__main__":
+    app.run(host='127.0.0.1', port=5000)
